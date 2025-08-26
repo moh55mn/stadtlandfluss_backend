@@ -15,20 +15,11 @@ class CategorySerializer(serializers.ModelSerializer):
  
 class TermSerializer(serializers.ModelSerializer):
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
-    created_by = serializers.SerializerMethodField(read_only=True)
  
     class Meta:
         model = Term
-        fields = ("id", "category", "value", "first_letter", "is_approved", "created_by", "created_at")
-        read_only_fields = ("first_letter", "created_by", "created_at")
+        fields = ("id", "category", "value")
  
-    def get_created_by(self, obj):
-        return obj.created_by.username if obj.created_by else None
- 
-    def create(self, validated_data):
-        user = self.context["request"].user
-        validated_data["created_by"] = user if user.is_authenticated else None
-        return super().create(validated_data)
  
 # --- Write-Serializer für Submits (Cache-Variante weiter nutzbar) ---
  
@@ -50,7 +41,7 @@ class HighscoreSerializer(serializers.ModelSerializer):
  
     class Meta:
         model = Highscore
-        fields = ("user", "total_points", "last_updated")
+        fields = ("user", "total_points")
  
     def get_user(self, obj):
         u = obj.user

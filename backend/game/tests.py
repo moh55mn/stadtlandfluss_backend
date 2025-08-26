@@ -46,7 +46,6 @@ class GameCacheFlowTests(APITestCase):
         Term.objects.get_or_create(
             category_id=self.cat_city.id,
             value="Berlin",
-            defaults={"is_approved": True},
         )
  
         # Clients authentifizieren
