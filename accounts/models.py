@@ -8,8 +8,8 @@ class Roles(models.TextChoices):
 class CustomUserManager(DjangoUserManager):
     """Sorgt dafür, dass Superuser aktiv & Admin-Rolle erhält."""
     def create_superuser(self, username, email=None, password=None, **extra_fields):
-        extra_fields.setdefault("is_staff", True)
-        extra_fields.setdefault("is_superuser", True)
+        # extra_fields.setdefault("is_staff", True)
+        # extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)   # Superuser sofort aktiv
         extra_fields.setdefault("role", Roles.ADMIN)
         return super().create_superuser(username, email, password, **extra_fields)

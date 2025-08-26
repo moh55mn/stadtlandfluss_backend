@@ -18,7 +18,7 @@ class UserAdmin(DjangoUserAdmin):
     list_display = ("username", "email", "role", "is_active", "date_joined")
     list_display_links = ("username",)  # Link bleibt auf dem Username
     list_editable = ("role", "is_active")  # Direkt in der Liste änderbar
-    list_filter = ("role", "is_active", "is_staff", "is_superuser")
+    list_filter = ("role", "is_active")
     search_fields = ("username", "email")
     ordering = ("-date_joined",)
     actions = [activate_users, deactivate_users]
@@ -26,7 +26,7 @@ class UserAdmin(DjangoUserAdmin):
     fieldsets = (
         (None, {"fields": ("username", "password")}),
         (_("Persönliche Info"), {"fields": ("first_name", "last_name", "email")}),
-        (_("Rollen & Status"), {"fields": ("role", "is_active", "is_staff", "is_superuser")}),
+        (_("Rollen & Status"), {"fields": ("role", "is_active")}),
         (_("Berechtigungen"), {"fields": ("groups", "user_permissions")}),
         (_("Wichtige Daten"), {"fields": ("last_login", "date_joined")}),
     )
@@ -34,7 +34,7 @@ class UserAdmin(DjangoUserAdmin):
     add_fieldsets = (
         (None, {
             "classes": ("wide",),
-            "fields": ("username", "password1", "password2", "role", "is_active", "is_staff"),
+            "fields": ("username", "password1", "password2", "role", "is_active"),
         }),
     )
 

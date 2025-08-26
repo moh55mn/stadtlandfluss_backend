@@ -6,13 +6,13 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("username", "email", "password")
+        fields = ("username", "password")
 
     def create(self, validated_data):
         # Normale Nutzer: Rolle "user", is_active=False (Freischaltung durch Admin)
         user = User(
             username=validated_data["username"],
-            email=validated_data.get("email", ""),
+            # email=validated_data.get("email", ""),
             role=Roles.USER,
         )
         user.set_password(validated_data["password"])

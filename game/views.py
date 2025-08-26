@@ -1,62 +1,61 @@
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.shortcuts import get_object_or_404
 from django.db import transaction
-
-from .models import (
-    Category, Term, Round, Submission, UnknownTerm, Vote, WaitingPlayer, RoundParticipant, BASE_POINTS
-)
+ 
+from accounts.permissions import IsAdminRole
+from .models import Category, Term, Highscore, BASE_POINTS
 from .serializers import (
-    CategorySerializer, TermSerializer, CurrentRoundSerializer,
-    SubmissionWriteSerializer, SubmissionReadSerializer,
-    VoteWriteSerializer, UnknownTermSerializer, HighscoreSerializer
+    CategorySerializer, TermSerializer,
+    SubmissionWriteSerializer,
+    HighscoreSerializer, CurrentRoundDictSerializer, UnknownTermListItemSerializer
 )
-from .services import ensure_active_round, get_active_round
-from .permissions import IsAdminRole
-
-
-# ---- Admin: Kategorien ----
-
+ 
+# >>> Cache-basierte Services/Utils importieren
+from .services_cache import (
+    start_new_round, submit as cache_submit, vote_unknown as cache_vote_unknown,
+    finalize_and_score as cache_finalize_and_score
+)
+from .cache_store import (
+    get_active_round, set_active_round, list_all_submissions_for_round, get_votes
+)
+ 
+# =========================
+# Admin: Kategorien
+# =========================
+ 
 class CategoryListCreateView(ListCreateAPIView):
     """
-    GET: alle sichtbar (für alle)
+    GET: alle sichtbar (öffentlich)
     POST: nur Admin
     """
     queryset = Category.objects.all().order_by("name")
     serializer_class = CategorySerializer
-
+ 
     def get_permissions(self):
         if self.request.method == "POST":
-            return [IsAuthenticated(), IsAdminRoleOrStaff()]
+            return [IsAuthenticated(), IsAdminRole()]
         return [AllowAny()]
-
-
+ 
 class CategoryDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-
+ 
     def get_permissions(self):
         if self.request.method in ("PUT", "PATCH", "DELETE"):
-            return [IsAuthenticated(), IsAdminRoleOrStaff()]
+            return [IsAuthenticated(), IsAdminRole()]
         return [AllowAny()]
-
-
-# ---- Admin: Terms ----
-
-# game/views.py
-from accounts.permissions import IsAdminRole
-
+ 
+# =========================
+# Admin: Terms (komplett Admin-only)
+# =========================
+ 
 class TermListCreateView(ListCreateAPIView):
-    """
-    Komplett Admin-only (inkl. GET), um die Begriffe nicht öffentlich zu leaken.
-    Nur Admins dürfen neue Begriffe anlegen.
-    """
     serializer_class = TermSerializer
     permission_classes = [IsAdminRole]
-
+ 
     def get_queryset(self):
         qs = Term.objects.select_related("category").order_by("category__name", "value")
         category = self.request.query_params.get("category")
@@ -66,236 +65,151 @@ class TermListCreateView(ListCreateAPIView):
         if letter:
             qs = qs.filter(first_letter=letter.upper())
         return qs
-
+ 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
         ctx["request"] = self.request
         return ctx
-
-
+ 
 class TermDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Term.objects.select_related("category")
     serializer_class = TermSerializer
     permission_classes = [IsAdminRole]
-
+ 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
         ctx["request"] = self.request
         return ctx
-
-
-
-# ---- Spiel-Endpoints ----
-
+ 
+# =========================
+# Spiel-Endpoints (Cache)
+# =========================
+ 
 class JoinView(APIView):
-    """
-    Setzt den User auf die Warteliste. Wenn keine aktive Runde läuft,
-    startet sofort eine neue Runde und liefert sie zurück.
-    """
     permission_classes = [IsAuthenticated]
-
-    @transaction.atomic
+ 
     def post(self, request):
-        user = request.user
-
-        # Ist der User bereits Teilnehmer der aktiven Runde?
-        active = get_active_round()
-        if active and RoundParticipant.objects.filter(round=active, user=user).exists():
-            # Bereits drin → gib aktuelle Runde zurück
-            data = CurrentRoundSerializer(active, context={"request": request}).data
-            return Response(data, status=status.HTTP_200_OK)
-
-        # Warteliste setzen (OneToOne → get_or_create)
-        WaitingPlayer.objects.get_or_create(user=user)
-
-        # Sicherstellen, dass (falls keine Runde aktiv) eine gestartet wird
-        active = ensure_active_round(start_if_waiting=True)
-
-        if not active:
-            # sollte praktisch nicht eintreten, aber zur Sicherheit
-            return Response({"detail": "Du wurdest in die Warteschlange aufgenommen."}, status=202)
-
-        data = CurrentRoundSerializer(active, context={"request": request}).data
-        return Response(data, status=status.HTTP_200_OK)
-
-
+        rnd = get_active_round()
+        if not rnd:
+            # neue Runde erstellen mit aktuellem User als erstem Teilnehmer
+            participants = [request.user.id]
+            cats = list(Category.objects.values_list("id", flat=True))
+            rnd = start_new_round(participants, cats)
+        else:
+            # User zur Teilnehmerliste hinzufügen (und Runde zurück in Cache schreiben)
+            if request.user.id not in rnd["participants"]:
+                rnd["participants"].append(request.user.id)
+                set_active_round(rnd)
+        return Response(rnd, status=200)
+ 
 class CurrentRoundView(APIView):
-    """
-    Liefert die aktuelle Runde; finalisiert im Hintergrund abgelaufene Runden
-    und startet ggf. eine neue, wenn Spieler warten.
-    """
     permission_classes = [IsAuthenticated]
-
+ 
     def get(self, request):
-        active = ensure_active_round(start_if_waiting=True)
+        active = get_active_round()
         if not active:
             return Response(status=status.HTTP_204_NO_CONTENT)
-        ser = CurrentRoundSerializer(active, context={"request": request})
-        return Response(ser.data)
-
-
+        ser = CurrentRoundDictSerializer(active, context={"request": request})
+        return Response(ser.data, status=200)
+ 
 class SubmitView(APIView):
-    """
-    Nimmt eine Eingabe je Kategorie an. Upsert-Logik:
-    - existiert Submission -> überschreiben (solange Runde aktiv)
-    - sonst neu erstellen (Auto-Matching)
-    """
     permission_classes = [IsAuthenticated]
-
-    @transaction.atomic
+ 
     def post(self, request):
-        user = request.user
-        active = get_active_round()
-        if not active:
-            return Response({"detail": "Keine aktive Runde."}, status=status.HTTP_400_BAD_REQUEST)
-        if not RoundParticipant.objects.filter(round=active, user=user).exists():
-            return Response({"detail": "Du bist in dieser Runde kein Teilnehmer (ab nächster Runde dabei)."}, status=403)
-
-        serializer = SubmissionWriteSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        category_id = serializer.validated_data["category_id"]
-        text = serializer.validated_data["text"]
-
-        # Kategorie muss Teil der Runde sein
-        category = get_object_or_404(active.categories, id=category_id)
-
-        # Upsert: unique (round, user, category)
-        sub, created = Submission.objects.get_or_create(
-            round=active, user=user, category=category,
-            defaults={"original_text": text}
-        )
-        if not created:
-            # Aktualisieren → Auto-Matching erneut anwenden
-            sub.original_text = text
-            # save() triggert apply_auto_match() nur bei creating; deshalb:
-            sub.normalized_text = ""
-            sub.matched_term = None
-            sub.unknown_term = None
-            sub.is_valid = False
-            sub.is_unique = False
-            sub.similarity = 0.0
-            sub.save()  # führt nicht automatisch apply_auto_match aus
-            # darum manuell:
-            sub.apply_auto_match()
-            sub.save(update_fields=[
-                "normalized_text", "matched_term", "unknown_term",
-                "is_valid", "is_unique", "similarity", "original_text"
-            ])
-        else:
-            # bei create hat save() auto-match ausgeführt
-            sub.save()
-
-        read = SubmissionReadSerializer(sub)
-        return Response(read.data, status=201 if created else 200)
-
-
-
+        # Erwartet: { "category_id": int, "text": str }
+        data = request.data
+        if "category_id" not in data or "text" not in data:
+            return Response({"detail": "category_id und text sind erforderlich."}, status=400)
+        out = cache_submit(request.user.id, int(data["category_id"]), str(data["text"]))
+        return Response(out, status=201)
+ 
 class VoteView(APIView):
-    """
-    Abstimmung zu einem UnknownTerm (nur Teilnehmer der Runde).
-    Unique: pro (unknown_term, user) genau eine Stimme (updatebar).
-    """
     permission_classes = [IsAuthenticated]
-
-    @transaction.atomic
+ 
     def post(self, request):
-        user = request.user
-        data = VoteWriteSerializer(data=request.data)
-        data.is_valid(raise_exception=True)
-        ut = get_object_or_404(UnknownTerm, id=data.validated_data["unknown_term_id"])
-        rnd = ut.round
-
-        if rnd.is_finalized:
-            return Response({"detail": "Diese Runde ist bereits finalisiert. Keine Votes mehr möglich."}, status=400)
-
-        if not RoundParticipant.objects.filter(round=rnd, user=user).exists():
-            return Response({"detail": "Du bist kein Teilnehmer dieser Runde."}, status=403)
-
-        vote, created = Vote.objects.update_or_create(
-            unknown_term=ut, user=user, defaults={"value": data.validated_data["value"]}
-        )
-        ser = UnknownTermSerializer(ut)
-        return Response(ser.data, status=201 if created else 200)
-
-
-
-class ScoreboardView(APIView):
-    """
-    Liefert:
-    - Globales Highscore (Top N; default 10)
-    - Live-Snapshot der aktuellen Runde: pro Teilnehmer Anzahl gültiger Submissions und temporäre Punkte
-      (ohne Unique-Bonus, der erst bei Finalisierung feststeht).
-    """
-    permission_classes = [AllowAny]
-
-    def get(self, request):
-        limit = int(request.query_params.get("limit", 10))
-
-        # Globales Highscore
-        highs = Highscore.objects.select_related("user").order_by("-total_points")[:limit]
-        highs_ser = HighscoreSerializer(highs, many=True).data
-
-        # Live der aktuellen Runde (wenn vorhanden)
-        live = []
-        active = get_active_round()
-        if active:
-            # Für alle Teilnehmer gültige Submissions zählen
-            participants = active.round_participants.select_related("user").all()
-            for rp in participants:
-                valid_count = Submission.objects.filter(round=active, user=rp.user, is_valid=True).count()
-                live.append({
-                    "user": {"id": rp.user.id, "username": rp.user.username},
-                    "valid_count": valid_count,
-                    "points_estimate": valid_count * BASE_POINTS,  # ohne Unique-Bonus
-                })
-
-            # Sortieren nach points_estimate absteigend
-            live.sort(key=lambda x: x["points_estimate"], reverse=True)
-
-        return Response({
-            "highscores": highs_ser,
-            "live": live,
-        })
-
-
-# ---- Admin/Test: neue Runde erzwingen ----
-
-class ForceNewRoundView(APIView):
-    """
-    Nur Admin: finalisiert ggf. aktive Runde und startet sofort eine neue.
-    Nützlich für Tests/Demos.
-    """
-    permission_classes = [IsAuthenticated, IsAdminRole]
-
-    @transaction.atomic
-    def post(self, request):
-        # Finalisierung über ensure_active_round (finalize) erzwingen,
-        # danach direkt neue Runde start_new()
-        latest = Round.objects.order_by("-number").first()
-        if latest and not latest.is_finalized:
-            latest.finalize()
-        rnd = Round.start_new()
-        ser = CurrentRoundSerializer(rnd, context={"request": request})
-        return Response(ser.data, status=201)
-
-
-
-
+        # Erwartet: { "category_id": int, "normalized": str, "value": bool }
+        d = request.data
+        for f in ("category_id", "normalized", "value"):
+            if f not in d:
+                return Response({"detail": f"Feld '{f}' fehlt."}, status=400)
+        res = cache_vote_unknown(request.user.id, int(d["category_id"]), str(d["normalized"]), bool(d["value"]))
+        return Response(res, status=201)
+ 
 class UnknownTermsListView(APIView):
-    """
-    Listet UnknownTerms der aktiven Runde, nur für Runde-Teilnehmer.
-    Damit kann das Frontend eine Abstimmungsansicht bauen.
-    """
     permission_classes = [IsAuthenticated]
-
+ 
     def get(self, request):
         active = get_active_round()
         if not active:
             return Response({"detail": "Keine aktive Runde."}, status=400)
-
-        if not RoundParticipant.objects.filter(round=active, user=request.user).exists():
+ 
+        if request.user.id not in active["participants"]:
             return Response({"detail": "Du bist in dieser Runde kein Teilnehmer."}, status=403)
-
-        uts = active.unknown_terms.select_related("category").all().order_by("category__name", "normalized_text")
-        ser = UnknownTermSerializer(uts, many=True)
-        return Response(ser.data)
+ 
+        cat_ids = active.get("categories", [])
+        subs = list_all_submissions_for_round(active["number"], active["participants"], cat_ids)
+ 
+        unknown_items = []
+        for (user_id, cat_id), s in subs.items():
+            if not s.get("is_valid") and not s.get("matched_term_id"):
+                normalized = s.get("normalized") or ""
+                votes = get_votes(active["number"], cat_id, normalized)
+                approvals = sum(1 for v in votes.values() if v is True)
+                rejections = sum(1 for v in votes.values() if v is False)
+                unknown_items.append({
+                    "id": f"{active['number']}:{cat_id}:{normalized}",
+                    "normalized_text": normalized,
+                    "category": {"id": cat_id},   # Name optional (kannst du später ergänzen)
+                    "approvals": approvals,
+                    "rejections": rejections,
+                    "round": active["number"],
+                })
+ 
+        ser = UnknownTermListItemSerializer(unknown_items, many=True)
+        return Response(ser.data, status=200)
+ 
+class ScoreboardView(APIView):
+    """
+    Highscores: aus DB (persistent)
+    Live: aus Cache-Submissions (gültige zählen × BASE_POINTS; ohne Unique-Bonus).
+    """
+    permission_classes = [AllowAny]
+ 
+    def get(self, request):
+        limit = int(request.query_params.get("limit", 10))
+ 
+        # Globales Highscore (DB)
+        highs = Highscore.objects.select_related("user").order_by("-total_points")[:limit]
+        highs_ser = HighscoreSerializer(highs, many=True).data
+ 
+        # Live
+        live = []
+        active = get_active_round()
+        if active:
+            cat_ids = active.get("categories", [])
+            subs = list_all_submissions_for_round(active["number"], active["participants"], cat_ids)
+            # Zähle pro User gültige Submissions
+            valid_counts = {}
+            for (u, _c), s in subs.items():
+                if s.get("is_valid"):
+                    valid_counts[u] = valid_counts.get(u, 0) + 1
+            for u, cnt in valid_counts.items():
+                live.append({
+                    "user": {"id": u},  # optional Username nachladen, wenn nötig
+                    "valid_count": cnt,
+                    "points_estimate": cnt * BASE_POINTS,
+                })
+            live.sort(key=lambda x: x["points_estimate"], reverse=True)
+ 
+        return Response({"highscores": highs_ser, "live": live}, status=200)
+ 
+class ForceNewRoundView(APIView):
+    """
+    Finalisiert aktuelle Runde (aus Cache) und kumuliert Punkte in DB.
+    """
+    permission_classes = [IsAdminRole]
+ 
+    @transaction.atomic
+    def post(self, request):
+        res = cache_finalize_and_score()
+        return Response(res, status=201)

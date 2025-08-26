@@ -135,3 +135,12 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "django_cache",   # Name der DB-Tabelle
+        "TIMEOUT": 120,
+        "OPTIONS": {"MAX_ENTRIES": 100000},
+    }
+}

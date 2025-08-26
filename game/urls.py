@@ -1,25 +1,23 @@
 from django.urls import path
-from .views import (
-    CategoryListCreateView, CategoryDetailView,
-    TermListCreateView, TermDetailView,
-    JoinView, CurrentRoundView, SubmitView, VoteView, ScoreboardView, ForceNewRoundView, UnknownTermsListView
-)
-
+from . import views
+ 
 urlpatterns = [
-    # Admin/CRUD
-    path("categories/", CategoryListCreateView.as_view(), name="categories"),
-    path("categories/<int:pk>/", CategoryDetailView.as_view(), name="category-detail"),
-    path("terms/", TermListCreateView.as_view(), name="terms"),
-    path("terms/<int:pk>/", TermDetailView.as_view(), name="term-detail"),
-
-    # Spiel
-    path("join/", JoinView.as_view(), name="join"),
-    path("round/current/", CurrentRoundView.as_view(), name="round-current"),
-    path("submit/", SubmitView.as_view(), name="submit"),
-    path("vote/", VoteView.as_view(), name="vote"),
-    path("scoreboard/", ScoreboardView.as_view(), name="scoreboard"),
-    path("unknown-terms/", UnknownTermsListView.as_view(), name="unknown-terms"),
-
+    # Kategorien + Terms (Admin)
+    path("categories/", views.CategoryListCreateView.as_view(), name="category-list"),
+    path("categories/<int:pk>/", views.CategoryDetailView.as_view(), name="category-detail"),
+ 
+    path("terms/", views.TermListCreateView.as_view(), name="term-list"),
+    path("terms/<int:pk>/", views.TermDetailView.as_view(), name="term-detail"),
+ 
+    # Spiel-Endpoints
+    path("join/", views.JoinView.as_view(), name="join"),
+    path("current/", views.CurrentRoundView.as_view(), name="current-round"),
+    path("submit/", views.SubmitView.as_view(), name="submit"),
+    path("vote/", views.VoteView.as_view(), name="vote"),
+    path("unknown/", views.UnknownTermsListView.as_view(), name="unknown-terms"),
+    path("scoreboard/", views.ScoreboardView.as_view(), name="scoreboard"),
+ 
     # Admin/Test
-    path("round/force-new/", ForceNewRoundView.as_view(), name="round-force-new"),
+    path("force-new-round/", views.ForceNewRoundView.as_view(), name="force-new-round"),
 ]
+
