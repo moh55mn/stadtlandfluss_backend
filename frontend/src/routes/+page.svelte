@@ -1,0 +1,123 @@
+<script>
+  let username = '';
+  let password = '';
+  // Dummy user database
+  const dummyUsers = [
+    { username: 'user1', password: 'pass1', freigeschaltet: true },
+    { username: 'user2', password: 'pass2', freigeschaltet: false },
+    { username: 'user3', password: 'pass3', freigeschaltet: true }
+  ];
+
+  import { goto } from '$app/navigation';
+
+  let loginError = '';
+
+  async function login() {
+    loginError = '';
+    try {
+      const res = await fetch('https://hanna03re.pythonanywhere.com/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        goto('/game');
+      } else {
+        loginError = data.error || 'Login fehlgeschlagen.';
+      }
+    } catch (e) {
+      loginError = 'Server nicht erreichbar.';
+    }
+  }
+  function register() {
+    // TODO: Implement register logic
+    alert(`Register: ${username}`);
+  }
+</script>
+
+<div class="login-wrapper">
+  <div class="logo-box">
+    <img src="/logo.png" alt="Logo" class="logo-img" />
+    <div class="title">Stadt Land Fluss</div>
+  </div>
+  <div class="desc">
+    <span>Geben Sie Ihre Anmeldedaten an<br>oder erstellen Sie ein neues Konto</span>
+  </div>
+  <input type="text" bind:value={username} placeholder="Username" class="input-large">
+  <input type="password" bind:value={password} placeholder="Passwort" class="input-large">
+  <button class="btn-large" on:click={login}>Anmelden</button>
+  {#if loginError}
+    <div class="login-error">{loginError}</div>
+  {/if}
+  <button class="btn-large" on:click={register}>Registrieren</button>
+</div>
+
+<style>
+.login-wrapper {
+  max-width: 540px;
+  margin: 40px auto;
+  text-align: center;
+}
+.logo-box {
+  margin-bottom: 20px;
+}
+.logo-img {
+  display: block;
+  margin: 0 auto 10px auto;
+  width: 220px;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+}
+.title {
+  font-size: 2.2rem;
+  color: #555;
+  margin-bottom: 10px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+.desc {
+  font-size: 2.5rem;
+  color: #555;
+  margin-bottom: 20px;
+  line-height: 1.1;
+}
+.input-large {
+  width: 100%;
+  font-size: 2rem;
+  padding: 16px;
+  margin-bottom: 18px;
+  box-sizing: border-box;
+  border: 2px solid #888;
+  border-radius: 4px;
+  color: #555;
+  background: #fff;
+}
+.input-large::placeholder {
+  color: #bbb;
+}
+.btn-large {
+  width: 100%;
+  font-size: 2rem;
+  padding: 16px;
+  margin-bottom: 18px;
+  background: #888;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+.btn-large:hover {
+  background: #666;
+}
+.login-error {
+  color: #c00;
+  font-size: 1.3rem;
+  margin-bottom: 18px;
+}
+</style>
