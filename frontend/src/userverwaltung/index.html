@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Userverwaltung</title>
+</head>
+<body>
+  <h1>Userverwaltung</h1>
+  <p>Insgesamt: <span id="user-count">0</span> User</p>
+
+  <table border="1">
+    <thead>
+      <tr>
+        <th>Nr.</th>
+        <th>Username</th>
+        <th>Passwort</th>
+        <th>Status</th>
+        <th>Aktionen</th>
+      </tr>
+    </thead>
+    <tbody id="user-table">
+      <!-- Dynamisch per JS befüllt -->
+    </tbody>
+  </table>
+
+  <button onclick="createUser()">Neuen erstellen</button>
+  <button onclick="editUser()">Ändern</button>
+  <button onclick="deleteUser()">Löschen</button>
+  <button onclick="toggleUser()">Freischalten</button>
+
+  <script>
+    //  JS-Funktionen
+    function createUser() { alert("Neuen User erstellen"); }
+    function editUser() { alert("User ändern"); }
+    function deleteUser() { alert("User löschen"); }
+    function toggleUser() { alert("User freischalten"); }
+
+    //  Datenanzeige
+    const users = [
+      { username: "user1", password: "pass1", status: "freigeschaltet" },
+      { username: "user2", password: "pass2", status: "freigeschaltet" },
+      { username: "user3", password: "pass3", status: "freigeschaltet" },
+      { username: "user4", password: "pass4", status: "nicht freigeschaltet" },
+    ];
+
+    const table = document.getElementById("user-table");
+    document.getElementById("user-count").textContent = users.length;
+
+    users.forEach((user, i) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${i + 1}</td>
+        <td>${user.username}</td>
+        <td>${user.password}</td>
+        <td>${user.status}</td>
+        <td>
+          <button onclick="toggleUser()">Freischalten</button>
+          <button onclick="deleteUser()">Löschen</button>
+        </td>
+      `;
+      table.appendChild(row);
+    });
+  </script>
+</body>
+</html>
