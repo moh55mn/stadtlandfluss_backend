@@ -9,14 +9,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ("username", "password")
 
     def create(self, validated_data):
-        # Normale Nutzer: Rolle "user", is_active=False (Freischaltung durch Admin)
-        user = User(
-            username=validated_data["username"] # role deleted!!!
-        )
-        user.set_password(validated_data["password"])
-        # is_active bleibt default False (siehe Model)
-        user.save()
-        return user
+        
+        return User.objects.create_user(**validated_data)
 
 
 class UserSerializer(serializers.ModelSerializer):

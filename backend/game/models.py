@@ -19,11 +19,7 @@ class Category(models.Model):
  
  
 class Term(models.Model):
-    """
-    Bekannte, gültige Begriffe, gepflegt durch Admins.
-    normalized_value dient schnellem Matching (fuzzy).
-    first_letter enthält den Großbuchstaben (A–Z) des Begriffs.
-    """
+
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="terms")
     value = models.CharField(max_length=120)
  
