@@ -16,6 +16,7 @@ urlpatterns = [
     path("vote/", views.VoteView.as_view(), name="vote"),
     path("unknown/", views.UnknownTermsListView.as_view(), name="unknown-terms"),
     path("scoreboard/", views.ScoreboardView.as_view(), name="scoreboard"),
+    path("me/score/", views.MyTotalScoreView.as_view(), name="my-total-score"),
  
     # Admin/Test
     path("force-new-round/", views.ForceNewRoundView.as_view(), name="force-new-round"),

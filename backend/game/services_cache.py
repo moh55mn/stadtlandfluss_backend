@@ -32,19 +32,23 @@ def auto_match(letter: str, cat: Category, text: str) -> tuple[bool, dict]:
     if not norm:
         return False, {"normalized": norm, "similarity": 0.0, "matched_term_id": None}
  
-    first = first_letter_upper(text)
-    if first != letter:
+    # Buchstaben der Runde strikt prüfen (Regel des Spiels)
+    if first_letter_upper(text) != letter:
         return False, {"normalized": norm, "similarity": 0.0, "matched_term_id": None}
  
-    # Kandidaten (vereinfachtes Beispiel)
-    candidates = Term.objects.filter(category=cat, first_letter=first, is_approved=True)[:200]
-    best, best_sim = None, 0.0
+    # Kandidaten: alle Terms der Kategorie, die mit dem Buchstaben anfangen (per DB)
+    candidates = Term.objects.filter(category=cat, value__istartswith=letter).only("id", "value")[:500]
+ 
+    best_id, best_sim = None, 0.0
     for t in candidates:
-        sim = similarity(norm, t.normalized_value)
+        t_norm = normalize_text(t.value)              # on-the-fly statt normalized_value-Feld
+        sim = similarity(norm, t_norm)
         if sim > best_sim:
-            best_sim, best = sim, t
-    if best and best_sim >= SIMILARITY_THRESHOLD:
-        return True, {"normalized": norm, "similarity": best_sim, "matched_term_id": best.id}
+            best_sim, best_id = sim, t.id
+ 
+    if best_id and best_sim >= SIMILARITY_THRESHOLD:
+        return True, {"normalized": norm, "similarity": best_sim, "matched_term_id": best_id}
+ 
     return False, {"normalized": norm, "similarity": best_sim, "matched_term_id": None}
  
 def submit(user_id: int, category_id: int, text: str):

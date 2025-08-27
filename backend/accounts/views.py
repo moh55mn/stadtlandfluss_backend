@@ -32,7 +32,7 @@ class AdminUserListView(ListAPIView):
     Optional: später Filter/Suche/Pagination ergänzen.
     """
     permission_classes = [IsAdminRole]
-    queryset = User.objects.all().order_by("-date_joined")
+    queryset = User.objects.all()
     serializer_class = UserSerializer
 class AdminUserActivateView(UpdateAPIView):
     """

@@ -11,6 +11,6 @@ class IsAdminRole(BasePermission):
         return bool(
             user
             and user.is_authenticated
-            and (getattr(user, "role", "") == "admin" or user.is_superuser)
+            and user.is_staff
         )
 

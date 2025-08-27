@@ -1,26 +1,42 @@
 from django.contrib.auth.models import AbstractUser, UserManager as DjangoUserManager
 from django.db import models
-
-class Roles(models.TextChoices):
-    ADMIN = "admin", "Admin"
-    USER = "user", "User"
-
+ 
+ 
 class CustomUserManager(DjangoUserManager):
-    """Sorgt dafür, dass Superuser aktiv & Admin-Rolle erhält."""
+    """Custom manager so normal users start inactive, superusers get staff/admin rights."""
+ 
+    def create_user(self, username, email=None, password=None, **extra_fields):
+        extra_fields.setdefault("is_active", False)  # normal users inactive until approved
+        extra_fields.setdefault("is_staff", False)   # normal users not staff
+        return super().create_user(username, email, password, **extra_fields)
+ 
     def create_superuser(self, username, email=None, password=None, **extra_fields):
-        # extra_fields.setdefault("is_staff", True)
-        # extra_fields.setdefault("is_superuser", True)
-        extra_fields.setdefault("is_active", True)   # Superuser sofort aktiv
-        extra_fields.setdefault("role", Roles.ADMIN)
+        # superuser must be active and staff
+        extra_fields.setdefault("is_active", True)
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+ 
+        if extra_fields.get("is_staff") is not True:
+            raise ValueError("Superuser must have is_staff=True.")
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError("Superuser must have is_superuser=True.")
+ 
         return super().create_superuser(username, email, password, **extra_fields)
-
+ 
+ 
 class User(AbstractUser):
-    # Standardfelder wie username, email, first_name, last_name kommen von AbstractUser
-    role = models.CharField(max_length=10, choices=Roles.choices, default=Roles.USER)
-    # Normale User müssen durch Admin freigeschaltet werden:
-    is_active = models.BooleanField(default=False)
-
+    """
+    Custom user:
+    - Remove first_name, last_name, email
+    - Use is_staff instead of custom role
+    """
+ 
+    first_name = None
+    last_name = None
+    email = None
+    date_joined = None
+ 
     objects = CustomUserManager()
-
+ 
     def __str__(self):
-        return f"{self.username} ({self.role})"
+        return f"{self.username} ({'Admin' if self.is_staff else 'User'})"

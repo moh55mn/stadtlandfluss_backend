@@ -63,13 +63,9 @@ class TermListCreateView(ListCreateAPIView):
             qs = qs.filter(category_id=category)
         letter = self.request.query_params.get("letter")
         if letter:
-            qs = qs.filter(first_letter=letter.upper())
+            qs = qs.filter(value__istartwith=letter.upper())
         return qs
  
-    def get_serializer_context(self):
-        ctx = super().get_serializer_context()
-        ctx["request"] = self.request
-        return ctx
  
 class TermDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Term.objects.select_related("category")
@@ -213,3 +209,19 @@ class ForceNewRoundView(APIView):
     def post(self, request):
         res = cache_finalize_and_score()
         return Response(res, status=201)
+
+
+
+
+class MyTotalScoreView(APIView):
+    permission_classes = [IsAuthenticated]
+ 
+    def get(self, request):
+        # total_points (persistiert). Wenn es noch keinen Eintrag gibt: 0
+        total = Highscore.objects.filter(user=request.user)\
+                 .values_list("total_points", flat=True).first() or 0
+ 
+        return Response({
+            "user": {"id": request.user.id, "username": request.user.username},
+            "total_points": total,
+        }, status=200)
