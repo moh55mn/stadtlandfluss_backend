@@ -11,14 +11,7 @@ UMLAUT_MAP = {
 }
 
 def normalize_text(s: str) -> str:
-    """
-    Normalisiert Eingaben für robustes Matching:
-    - whitespace trim + collapse
-    - lower
-    - Umlaute & ß zu ae/oe/ue/ss
-    - diacritics entfernen (é -> e)
-    - nur alphanum + Leerzeichen (bindestriche zu Leerzeichen)
-    """
+
     if not s:
         return ""
     s = s.strip().lower()

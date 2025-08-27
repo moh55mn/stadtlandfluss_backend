@@ -47,7 +47,7 @@ class HighscoreSerializer(serializers.ModelSerializer):
         u = obj.user
         return {"id": u.id, "username": u.username}
  
-# --- Cache-Variante: Dict-basierte Runde & Unknowns ---
+
  
 class CategoryRefSerializer(serializers.Serializer):
     id = serializers.IntegerField()
@@ -56,8 +56,8 @@ class CategoryRefSerializer(serializers.Serializer):
 class CurrentRoundDictSerializer(serializers.Serializer):
     number = serializers.IntegerField()
     letter = serializers.CharField()
-    start = serializers.CharField()  # ISO-String aus dem Cache
-    end = serializers.CharField()    # ISO-String aus dem Cache
+    start = serializers.CharField()  
+    end = serializers.CharField()    
     participants = serializers.ListField(child=serializers.IntegerField(), allow_empty=True)
     categories = serializers.ListField(child=serializers.IntegerField(), allow_empty=True)
     remaining_seconds = serializers.SerializerMethodField()

@@ -3,7 +3,6 @@ from django.db import models
  
  
 class CustomUserManager(DjangoUserManager):
-    """Custom manager so normal users start inactive, superusers get staff/admin rights."""
  
     def create_user(self, username, password=None, **extra_fields):
         extra_fields.setdefault("is_active", False)
@@ -39,11 +38,6 @@ class CustomUserManager(DjangoUserManager):
  
  
 class User(AbstractUser):
-    """
-    Custom user:
-    - Remove first_name, last_name, email
-    - Use is_staff instead of custom role
-    """
  
     first_name = None
     last_name = None
