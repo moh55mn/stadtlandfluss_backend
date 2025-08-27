@@ -21,6 +21,9 @@
 		"vite": "^7.0.4"
 	},
 	"dependencies": {
-		"axios": "^1.11.0"
+		"@tailwindcss/vite": "^4.1.12",
+		"axios": "^1.11.0",
+		"daisyui": "^5.0.51",
+		"tailwindcss": "^4.1.12"
 	}
 }

@@ -1,80 +1,55 @@
 <script lang="ts">
-	import favicon from '$lib/assets/favicon.svg';
-	import { fetchData } from '$lib/api';
+    import { onMount } from 'svelte';
+    import favicon from '$lib/assets/favicon.svg';
+    import "../app.css";
 
-	let data: any = null;
-	let error: string | null = null;
+    let highscores: { user: string, score: number }[] = [];
+    let error: string | null = null;
 
-  // Dummy highscores
-  let highscores = [
-    { user: 'user2', score: 150 },
-    { user: 'user1', score: 100 },
-    { user: 'user3', score: 80 },
-    { user: 'user4', score: 50 }
-  ];
+    onMount(async () => {
+        try {
+            const res = await fetch('https://congenial-giggle-g45p57755747cpgpj-8000.app.github.dev/api/game/scoreboard/');
+            if (!res.ok) throw new Error('Fehler beim Laden der Highscores');
+            const data = await res.json();
+            // Map API response to expected format
+            highscores = (data.highscores || []).map((entry: any) => ({
+                user: entry.user.username,
+                score: entry.total_points
+            }));
+        } catch (e) {
+            error = e.message;
+        }
+    });
 </script>
 
 <svelte:head>
-	<link rel="icon" href={favicon} />
+    <link rel="icon" href={favicon} />
 </svelte:head>
 
-<div class="app-layout">
-  <aside class="sidebar">
-    <nav>
-      <a href="/">Login</a>
-      <a href="/game">Spiel</a>
-      <a href="/userverwaltung">Userverwaltung</a>
-      <a href="/begriffverwaltung">Begriffverwaltung</a>
-    </nav>
-    <div class="highscores">
-      <h3>Highscores</h3>
-      <ul>
-        {#each highscores as h}
-          <li>{h.user}: {h.score}</li>
-        {/each}
-      </ul>
-    </div>
-  </aside>
-  <main>
-    <slot />
-  </main>
+<div class="flex min-h-screen">
+    <aside class="card bg-base-200 w-64 p-4 border-r shadow">
+        <nav class="flex flex-col gap-2 mb-6">
+            <a href="/" class="btn btn-ghost">Login</a>
+            <a href="/game" class="btn btn-ghost">Spiel</a>
+            <a href="/userverwaltung" class="btn btn-ghost">Userverwaltung</a>
+            <a href="/begriffverwaltung" class="btn btn-ghost">Begriffverwaltung</a>
+        </nav>
+        <div class="card bg-base-100 p-4">
+            <h3 class="card-title mb-2">Highscores</h3>
+            {#if error}
+                <div class="alert alert-error my-2">{error}</div>
+            {/if}
+            <ul class="list-none p-0 m-0">
+                {#each highscores as h}
+                    <li class="flex justify-between py-1">
+                        <span>{h.user}</span>
+                        <span class="badge badge-outline">{h.score}</span>
+                    </li>
+                {/each}
+            </ul>
+        </div>
+    </aside>
+    <main class="flex-1 p-8 bg-base-100">
+        <slot />
+    </main>
 </div>
-
-<style>
-.app-layout {
-  display: flex;
-  min-height: 100vh;
-}
-.sidebar {
-  width: 220px;
-  background: #f5f5f5;
-  padding: 20px;
-  border-right: 1px solid #ddd;
-}
-.sidebar nav {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 30px;
-}
-.sidebar a {
-  color: #333;
-  text-decoration: none;
-  font-weight: bold;
-}
-.sidebar a:hover {
-  text-decoration: underline;
-}
-.highscores h3 {
-  margin: 0 0 10px 0;
-}
-.highscores ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-main {
-  flex: 1;
-  padding: 40px;
-}
-</style>
