@@ -8,7 +8,6 @@
   import { goto } from '$app/navigation';
 
   async function login() {
-    let loginError = '';
     try {
       //const res = await fetch('https://hanna03re.pythonanywhere.com/api/login', {
       const res = await fetch('https://congenial-giggle-g45p57755747cpgpj-8000.app.github.dev/api/accounts/auth/login/', {
@@ -80,9 +79,6 @@
     <div class="login-error">{loginError}</div>
   {/if}
   <button class="btn-large" on:click={register}>Registrieren</button>
-  {#if loginError}
-    <div class="login-error">{loginError}</div>
-  {/if}
   {#if registerError}
     <div class="login-error">{registerError}</div>
   {/if}

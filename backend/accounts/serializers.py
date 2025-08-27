@@ -11,9 +11,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # Normale Nutzer: Rolle "user", is_active=False (Freischaltung durch Admin)
         user = User(
-            username=validated_data["username"],
-            # email=validated_data.get("email", ""),
-            role=Roles.USER,
+            username=validated_data["username"] # role deleted!!!
         )
         user.set_password(validated_data["password"])
         # is_active bleibt default False (siehe Model)
