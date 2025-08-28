@@ -10,7 +10,7 @@
 
   async function login() {
     try {
-      const res = await fetch('https://congenial-giggle-g45p57755747cpgpj-8000.app.github.dev/api/accounts/auth/login/', {
+      const res = await fetch('https://fantastic-telegram-pjvg5rrq94f6wgg-8000.app.github.dev/api/accounts/auth/login/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })

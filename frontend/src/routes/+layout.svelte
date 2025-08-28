@@ -8,7 +8,7 @@
 
     onMount(async () => {
         try {
-            const res = await fetch('https://congenial-giggle-g45p57755747cpgpj-8000.app.github.dev/api/game/scoreboard/');
+            const res = await fetch('https://fantastic-telegram-pjvg5rrq94f6wgg-8000.app.github.dev/api/game/scoreboard/');
             if (!res.ok) throw new Error('Fehler beim Laden der Highscores');
             const data = await res.json();
             // Map API response to expected format
