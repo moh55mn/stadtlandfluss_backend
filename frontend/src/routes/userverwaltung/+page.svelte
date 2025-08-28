@@ -115,4 +115,7 @@ button:disabled {
 
 // tenärer Operator Zeile 6
 // bearbeitet von Felix Schuler
-// 
+// zuletzt eingesehen 28.08.2025
+// https://developer.mozilla.org/de/docs/Web/JavaScript/Reference/Operators/Conditional_operator
+// sveltekit TailwindCss: https://tailwindcss.com/
+// sveltekit: https://svelte.dev/
