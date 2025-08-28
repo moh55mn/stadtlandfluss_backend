@@ -28,7 +28,7 @@
 </script>
 
 <h2>Begriffverwaltung</h2>
-<button on:click={addTerm}>Erfassen</button>
+
 
 <table>
   <thead>
@@ -48,6 +48,7 @@
         <td>
           <button on:click={() => editTerm(i)}>Ändern</button>
           <button on:click={() => removeTerm(i)}>Löschen</button>
+          <button on:click={() => addTerm(i)}>Erfassen</button>
         </td>
       </tr>
     {/each}
