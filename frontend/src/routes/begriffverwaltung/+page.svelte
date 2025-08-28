@@ -2,6 +2,7 @@
   let terms = [
     { term: 'Karlsruhe', category: 'Stadt' },
     { term: 'Kroatien', category: 'Land' },
+    { term: 'Kyll', category: 'Fluss' },
     { term: 'Känguru', category: 'Tier' }
   ];
 
