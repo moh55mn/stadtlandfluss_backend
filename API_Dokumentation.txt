@@ -1,0 +1,114 @@
+API-Dokumentation – Stadt Land Fluss Backend
+Authentifizierung
+JWT-basierte Authentifizierung (Login gibt Token zurück).
+Authentifizierte Endpoints: `Authorization: Bearer <token>` im Header senden.
+Accounts
+Register
+**URL:** /api/accounts/auth/register/
+**Methode:** POST
+**Auth:** Keine
+Beispiel Request:
+{ "username": "player1", "password": "test123" }
+Beispiel Response:
+{ "id": 5, "username": "player1", "is_active": false }
+Login
+**URL:** /api/accounts/auth/login/
+**Methode:** POST
+**Auth:** Keine
+Beispiel Request:
+{ "username": "player1", "password": "test123" }
+Beispiel Response:
+{ "refresh": "...", "access": "..." }
+Token Refresh
+**URL:** /api/accounts/auth/refresh/
+**Methode:** POST
+**Auth:** Keine
+Beispiel Request:
+{ "refresh": "<refresh-token>" }
+Beispiel Response:
+{ "access": "<new-access-token>" }
+Profil
+**URL:** /api/accounts/me/
+**Methode:** GET
+**Auth:** Ja
+Beispiel Response:
+{ "id": 5, "username": "player1", "is_active": true }
+Admin – Userliste
+**URL:** /api/accounts/admin/users/
+**Methode:** GET
+**Auth:** Admin
+Beispiel Response:
+[ { "id": 1, "username": "admin", "is_active": true }, { "id": 5, "username": "player1", "is_active": false } ]
+Admin – User aktivieren
+**URL:** /api/accounts/admin/users/<id>/activate/
+**Methode:** POST
+**Auth:** Admin
+Beispiel Response:
+{ "id": 5, "username": "player1", "is_active": true }
+
+Game
+Kategorien
+**URL:** /api/game/categories/
+**Methode:** GET/POST
+**Auth:** GET = Keine, POST = Admin
+Beispiel Response:
+[{"id": 1, "name": "Stadt"}, {"id": 2, "name": "Land"}]
+Kategorie Detail
+**URL:** /api/game/categories/<id>/
+**Methode:** GET/PUT/PATCH/DELETE
+**Auth:** GET = Keine, sonst Admin
+Beispiel Response:
+{ "id": 1, "name": "Stadt" }
+Terms
+**URL:** /api/game/terms/
+**Methode:** GET/POST
+**Auth:** Admin
+Beispiel Response:
+[{"id": 10, "category": 1, "value": "Berlin"}]
+Runde beitreten
+**URL:** /api/game/join/
+**Methode:** POST
+**Auth:** Ja
+Beispiel Response:
+{ "number": 1724829302, "letter": "B", "participants": [5,7], "categories": [1,2] }
+Aktive Runde
+**URL:** /api/game/current/
+**Methode:** GET
+**Auth:** Ja
+Beispiel Response:
+{ "number": 1724829302, "letter": "B", "remaining_seconds": 43 }
+Antwort einreichen
+**URL:** /api/game/submit/
+**Methode:** POST
+**Auth:** Ja
+Beispiel Request:
+{ "category_id": 1, "text": "Berlin" }
+Beispiel Response:
+{ "original": "Berlin", "normalized": "berlin", "is_valid": true }
+Unbekannte Wörter
+**URL:** /api/game/unknown/
+**Methode:** GET
+**Auth:** Ja
+Beispiel Response:
+[{ "id": "1724829302:1:blerlin", "normalized_text": "blerlin", "approvals": 2, "rejections": 1 }]
+Vote abgeben
+**URL:** /api/game/vote/
+**Methode:** POST
+**Auth:** Ja
+Beispiel Request:
+{ "category_id": 1, "normalized": "blerlin", "value": true }
+Beispiel Response:
+{ "ok": true }
+Scoreboard
+**URL:** /api/game/scoreboard/?limit=5
+**Methode:** GET
+**Auth:** Keine
+Beispiel Response:
+{ "highscores": [ { "user": {"id": 1, "username": "alice"}, "total_points": 45 } ] }
+Eigene Punkte
+**URL:** /api/game/my-score/
+**Methode:** GET
+**Auth:** Ja
+Beispiel Response:
+{ "user": {"id": 5, "username": "player1"}, "total_points": 20 }
+

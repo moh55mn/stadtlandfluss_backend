@@ -27,7 +27,6 @@ CSRF_TRUSTED_ORIGINS = env.list(
         "https://*.cloudworkstations.dev",
         "http://localhost:8000",
         "http://127.0.0.1:8000",
-        "https://congenial-giggle-g45p57755747cpgpj-5173.app.github.dev"
     ]
 )
 

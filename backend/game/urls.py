@@ -3,11 +3,11 @@ from . import views
  
 urlpatterns = [
     # Kategorien + Terms (Admin)
-    path("categories/", views.CategoryListCreateView.as_view(), name="category-list"),
-    path("categories/<int:pk>/", views.CategoryDetailView.as_view(), name="category-detail"),
+    # path("categories/", views.CategoryListCreateView.as_view(), name="category-list"),
+    # path("categories/<int:pk>/", views.CategoryDetailView.as_view(), name="category-detail"),
  
-    path("terms/", views.TermListCreateView.as_view(), name="term-list"),
-    path("terms/<int:pk>/", views.TermDetailView.as_view(), name="term-detail"),
+    #path("terms/", views.TermListCreateView.as_view(), name="term-list"),
+    #path("terms/<int:pk>/", views.TermDetailView.as_view(), name="term-detail"),
  
     # Spiel-Endpoints
     path("join/", views.JoinView.as_view(), name="join"),
@@ -19,6 +19,6 @@ urlpatterns = [
     path("me/score/", views.MyTotalScoreView.as_view(), name="my-total-score"),
  
     # Admin/Test
-    path("force-new-round/", views.ForceNewRoundView.as_view(), name="force-new-round"),
+    # path("force-new-round/", views.ForceNewRoundView.as_view(), name="force-new-round"),
 ]
 

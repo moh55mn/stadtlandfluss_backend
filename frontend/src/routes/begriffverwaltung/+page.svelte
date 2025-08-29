@@ -1,5 +1,4 @@
 <script>
-  // Dummy terms list
   let terms = [
     { term: 'Karlsruhe', category: 'Stadt' },
     { term: 'Kroatien', category: 'Land' },
@@ -10,36 +9,28 @@
   }
 </script>
 
-<h2>Begriffverwaltung</h2>
-<table>
-  <thead>
-    <tr>
-      <th>Begriff</th>
-      <th>Kategorie</th>
-      <th>Aktion</th>
-    </tr>
-  </thead>
-  <tbody>
-    {#each terms as term, i}
-      <tr>
-        <td>{term.term}</td>
-        <td>{term.category}</td>
-        <td><button on:click={() => removeTerm(i)}>Entfernen</button></td>
-      </tr>
-    {/each}
-  </tbody>
-</table>
-
-<style>
-table {
-  width: 100%; border-collapse: collapse; margin-top: 20px;
-}
-th, td {
-  border: 1px solid #bbb; padding: 8px; text-align: left;
-}
-th { background: #eee; }
-button {
-  background: #888; color: #fff; border: none; padding: 6px 12px; cursor: pointer; font-size: 14px;
-}
-button:hover { background: #666; }
-</style>
+<div class="card w-full max-w-2xl mx-auto mt-8 shadow-xl bg-base-100">
+  <div class="card-body">
+    <h2 class="card-title mb-4">Begriffverwaltung</h2>
+    <div class="overflow-x-auto">
+      <table class="table table-zebra w-full">
+        <thead>
+          <tr>
+            <th>Begriff</th>
+            <th>Kategorie</th>
+            <th>Aktion</th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each terms as term, i}
+            <tr>
+              <td>{term.term}</td>
+              <td>{term.category}</td>
+              <td><button class="btn btn-error btn-sm" on:click={() => removeTerm(i)}>Entfernen</button></td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

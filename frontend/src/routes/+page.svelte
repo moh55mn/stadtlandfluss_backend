@@ -17,6 +17,7 @@
       });
       const data = await res.json();
       if (res.ok && data.access) {
+        localStorage.setItem('access', data.access); // or sessionStorage
         goto('/game');
       } else {
         loginError = data.error || 'Login fehlgeschlagen.';
